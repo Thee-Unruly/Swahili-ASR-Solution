@@ -204,3 +204,28 @@ class ModelOptimizer:
         model = self.prune_model()
         model.eval()
         return model
+    
+class SwahiliASRTrainer:
+    """Main trainer class for Swahili ASR"""
+    
+    def __init__(self, config: ASRConfig):
+        self.config = config
+        self.dataset_handler = SwahiliDataset(config)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = OptimizedWhisperModel(config).to(self.device)
+        
+    def train(self):
+        """Train the ASR model"""
+        logger.info("Starting training...")
+        
+        # Prepare dataset using the preprocessed data path
+        train_dataset, val_dataset, test_dataset = self.dataset_handler.prepare_common_voice_data(self.config.data_base_path)
+        
+        # Fine-tune Whisper model
+        self._fine_tune_whisper(train_dataset, val_dataset)
+        
+        # Optimize model
+        optimizer = ModelOptimizer(self.model, self.config)
+        self.model = optimizer.optimize_for_inference()
+        
+        logger.info("Training completed!")
