@@ -165,3 +165,22 @@ class OptimizedWhisperModel(nn.Module):
             mel = whisper.log_mel_spectrogram(audio_chunk)
             result = self.whisper_model.decode(mel)
             return result.text
+        
+class ModelOptimizer:
+    """Model optimization for edge deployment"""
+    
+    def __init__(self, model: nn.Module, config: ASRConfig):
+        self.model = model
+        self.config = config
+    
+    def quantize_model(self) -> nn.Module:
+        """Apply quantization for memory efficiency"""
+        logger.info("Applying dynamic quantization...")
+        
+        quantized_model = torch.quantization.quantize_dynamic(
+            self.model,
+            {nn.Linear, nn.Conv1d},
+            dtype=torch.qint8
+        )
+        
+        return quantized_model
