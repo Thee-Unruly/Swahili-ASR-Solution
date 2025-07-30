@@ -229,3 +229,33 @@ class SwahiliASRTrainer:
         self.model = optimizer.optimize_for_inference()
         
         logger.info("Training completed!")
+
+    def _fine_tune_whisper(self, train_dataset, val_dataset):
+        """Fine-tune Whisper on Swahili data (simplified)"""
+        optimizer = torch.optim.AdamW(
+            self.model.parameters(), 
+            lr=self.config.learning_rate
+        )
+        
+        self.model.train()
+        
+        for epoch in range(self.config.num_epochs):
+            logger.info(f"Epoch {epoch + 1}/{self.config.num_epochs}")
+            
+            # Simplified training loop (needs proper implementation)
+            for i in range(0, len(train_dataset), self.config.batch_size):
+                batch = train_dataset[i:i + self.config.batch_size]
+                audio_batch = torch.stack([self.dataset_handler.processor.load_audio(item["audio"]) for item in batch])
+                text_batch = [self.dataset_handler.preprocess_text(item["sentence"]) for item in batch]
+                
+                # Placeholder for forward pass and loss (requires Whisper-specific handling)
+                # This needs a proper data collator and loss function (e.g., CTC)
+                optimizer.zero_grad()
+                # ... (implement forward pass and loss here)
+                # loss.backward()
+                # optimizer.step()
+            
+            # Memory cleanup
+            if (epoch + 1) % 2 == 0:
+                torch.cuda.empty_cache()
+                gc.collect()
