@@ -134,3 +134,10 @@ class SwahiliDataset:
         test_dataset = dataset.select(range(train_size + val_size, train_size + val_size + test_size))
         
         return train_dataset, val_dataset, test_dataset
+    
+    def preprocess_text(self, text: str) -> str:
+        """Preprocess Swahili text"""
+        text = text.lower().strip()
+        text = text.replace("'", "'")  # Normalize apostrophes
+        text = ' '.join(text.split())
+        return text
