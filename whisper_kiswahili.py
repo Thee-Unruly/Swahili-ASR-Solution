@@ -75,3 +75,20 @@ class AudioProcessor:
         except Exception as e:
             logger.error(f"Error loading audio {audio_path}: {e}")
             return torch.zeros(self.sample_rate)  # Return silence on error
+        
+    def apply_augmentation(self, waveform: torch.Tensor) -> torch.Tensor:
+        """Apply data augmentation techniques"""
+        # Speed perturbation
+        if np.random.random() < 0.3:
+            speed_factor = np.random.uniform(0.9, 1.1)
+            waveform = self._speed_perturbation(waveform, speed_factor)
+        
+        # Add noise
+        if np.random.random() < 0.2:
+            noise_factor = np.random.uniform(0.01, 0.05)
+            noise = torch.randn_like(waveform) * noise_factor
+            waveform = waveform + noise
+        
+        return waveform
+    
+    
