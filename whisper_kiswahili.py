@@ -91,4 +91,12 @@ class AudioProcessor:
         
         return waveform
     
-    
+    def _speed_perturbation(self, waveform: torch.Tensor, factor: float) -> torch.Tensor:
+        """Apply speed perturbation"""
+        if factor == 1.0:
+            return waveform
+        
+        # Use librosa for speed change
+        waveform_np = waveform.numpy()
+        waveform_stretched = librosa.effects.time_stretch(waveform_np, rate=factor)
+        return torch.from_numpy(waveform_stretched)
