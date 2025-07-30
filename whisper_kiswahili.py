@@ -288,3 +288,24 @@ class SwahiliASRTrainer:
             'predictions': predictions,
             'inference_time': end_time - start_time
         }
+    
+    def create_submission(self, test_audio_paths: List[str], output_path: str):
+        """Create submission file for the challenge"""
+        logger.info("Creating submission...")
+        
+        self.model.eval()
+        results = []
+        
+        with torch.no_grad():
+            for audio_path in test_audio_paths:
+                filename = Path(audio_path).name
+                audio = self.dataset_handler.processor.load_audio(audio_path)
+                prediction = self.model.transcribe_streaming(audio)
+                results.append({
+                    'filename': filename,
+                    'text': prediction.strip()
+                })
+        
+        submission_df = pd.DataFrame(results)
+        submission_df.to_csv(output_path, index=False)
+        logger.info(f"Submission saved to {output_path}")
