@@ -309,3 +309,26 @@ class SwahiliASRTrainer:
         submission_df = pd.DataFrame(results)
         submission_df.to_csv(output_path, index=False)
         logger.info(f"Submission saved to {output_path}")
+
+class RealTimeASR:
+    """Real-time ASR processing for streaming audio"""
+    
+    def __init__(self, model_path: str, config: ASRConfig):
+        self.config = config
+        self.model = torch.load(model_path, map_location='cpu')
+        self.model.eval()
+        self.chunk_size = int(0.5 * config.sample_rate)  # 0.5 second chunks
+        self.buffer = torch.zeros(0)
+        
+    def process_chunk(self, audio_chunk: torch.Tensor) -> Optional[str]:
+        """Process audio chunk for real-time transcription"""
+        self.buffer = torch.cat([self.buffer, audio_chunk])
+        
+        if len(self.buffer) >= self.chunk_size:
+            chunk = self.buffer[:self.chunk_size]
+            self.buffer = self.buffer[self.chunk_size//2:]  # 50% overlap
+            with torch.no_grad():
+                result = self.model.transcribe_streaming(chunk)
+                return result
+        
+        return None
