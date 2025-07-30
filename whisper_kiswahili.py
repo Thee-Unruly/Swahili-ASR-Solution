@@ -100,3 +100,37 @@ class AudioProcessor:
         waveform_np = waveform.numpy()
         waveform_stretched = librosa.effects.time_stretch(waveform_np, rate=factor)
         return torch.from_numpy(waveform_stretched)
+    
+class SwahiliDataset:
+    """Dataset handler for Kiswahili speech data"""
+    
+    def __init__(self, config: ASRConfig):
+        self.config = config
+        self.processor = AudioProcessor(config)
+        
+    def prepare_common_voice_data(self, data_path: str) -> Dataset:
+        """Prepare Mozilla Common Voice Swahili dataset using preprocessed data"""
+        logger.info("Loading preprocessed Common Voice Swahili dataset...")
+        
+        # Load cleaned validated data
+        validated_df = pd.read_csv(f"{data_path}/tsv_cleaned/validated_cleaned.tsv", sep='\t')
+        
+        # Map audio paths to augmented WAV files
+        validated_df["audio"] = validated_df["path"].apply(
+            lambda x: f"{data_path}/wav_augmented/{Path(x).stem}.wav"
+        )
+        
+        # Prepare dataset
+        dataset = Dataset.from_pandas(validated_df[["audio", "sentence"]])
+        dataset = dataset.cast_column("audio", Audio(sampling_rate=self.config.sample_rate))
+        
+        # Optional: Split into train, val, test if not already separated
+        train_size = int(0.8 * len(dataset))
+        val_size = int(0.1 * len(dataset))
+        test_size = len(dataset) - train_size - val_size
+        
+        train_dataset = dataset.select(range(train_size))
+        val_dataset = dataset.select(range(train_size, train_size + val_size))
+        test_dataset = dataset.select(range(train_size + val_size, train_size + val_size + test_size))
+        
+        return train_dataset, val_dataset, test_dataset
