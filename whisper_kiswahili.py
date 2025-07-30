@@ -259,3 +259,32 @@ class SwahiliASRTrainer:
             if (epoch + 1) % 2 == 0:
                 torch.cuda.empty_cache()
                 gc.collect()
+
+    def evaluate(self, test_dataset: Dataset) -> Dict:
+        """Evaluate model performance"""
+        logger.info("Evaluating model...")
+        
+        self.model.eval()
+        predictions = []
+        
+        start_time = time.time()
+        
+        with torch.no_grad():
+            for item in test_dataset:
+                audio = self.dataset_handler.processor.load_audio(item["audio"])
+                prediction = self.model.transcribe_streaming(audio)
+                predictions.append(prediction)
+        
+        end_time = time.time()
+        
+        ground_truth = [item["sentence"] for item in test_dataset]
+        wer = jiwer.wer(ground_truth, predictions)
+        total_audio_duration = sum([librosa.get_duration(filename=item["audio"]) for item in test_dataset])
+        rtf = (end_time - start_time) / total_audio_duration if total_audio_duration > 0 else float('inf')
+        
+        return {
+            'wer': wer,
+            'rtf': rtf,
+            'predictions': predictions,
+            'inference_time': end_time - start_time
+        }
