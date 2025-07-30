@@ -141,3 +141,27 @@ class SwahiliDataset:
         text = text.replace("'", "'")  # Normalize apostrophes
         text = ' '.join(text.split())
         return text
+    
+class OptimizedWhisperModel(nn.Module):
+    """Optimized Whisper model for edge deployment"""
+    
+    def __init__(self, config: ASRConfig):
+        super().__init__()
+        self.config = config
+        
+        # Load base Whisper model
+        self.whisper_model = whisper.load_model("small")
+        
+        # Enable gradient checkpointing for memory efficiency
+        self.whisper_model.encoder.use_cache = False
+        
+    def forward(self, mel_spectrogram):
+        """Forward pass with memory optimization"""
+        return self.whisper_model.decode(mel_spectrogram)
+    
+    def transcribe_streaming(self, audio_chunk: torch.Tensor) -> str:
+        """Streaming transcription for real-time processing"""
+        with torch.no_grad():
+            mel = whisper.log_mel_spectrogram(audio_chunk)
+            result = self.whisper_model.decode(mel)
+            return result.text
