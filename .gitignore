@@ -1,0 +1,13 @@
+kiswahili_asr_env/
+kiswahili_asr/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+kiswahili_asr_env/
+*.venv/
