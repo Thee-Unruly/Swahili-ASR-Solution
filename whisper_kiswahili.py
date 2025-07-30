@@ -45,4 +45,33 @@ class ASRConfig:
     target_memory_gb: int = 4  # Bonus target
     data_base_path: str = "C:/Users/ibrahim.fadhili/OneDrive - Agile Business Solutions/Desktop/ASR/kiswahili_asr/data/common_voice_swahili"
 
+class AudioProcessor:
+    """Handles audio preprocessing and augmentation"""
     
+    def __init__(self, config: ASRConfig):
+        self.config = config
+        self.sample_rate = config.sample_rate
+        
+    def load_audio(self, audio_path: str) -> torch.Tensor:
+        """Load and preprocess audio file"""
+        try:
+            # Load audio using torchaudio
+            waveform, sr = torchaudio.load(audio_path)
+            
+            # Resample if necessary
+            if sr != self.sample_rate:
+                resampler = torchaudio.transforms.Resample(sr, self.sample_rate)
+                waveform = resampler(waveform)
+            
+            # Convert to mono if stereo
+            if waveform.shape[0] > 1:
+                waveform = torch.mean(waveform, dim=0, keepdim=True)
+            
+            # Normalize
+            waveform = waveform / torch.max(torch.abs(waveform))
+            
+            return waveform.squeeze()
+            
+        except Exception as e:
+            logger.error(f"Error loading audio {audio_path}: {e}")
+            return torch.zeros(self.sample_rate)  # Return silence on error
