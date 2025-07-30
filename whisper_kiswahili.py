@@ -184,3 +184,23 @@ class ModelOptimizer:
         )
         
         return quantized_model
+    
+    def prune_model(self, sparsity: float = 0.3) -> nn.Module:
+        """Apply magnitude-based pruning"""
+        logger.info(f"Applying pruning with {sparsity} sparsity...")
+        
+        import torch.nn.utils.prune as prune
+        
+        for module in self.model.modules():
+            if isinstance(module, nn.Linear):
+                prune.l1_unstructured(module, name='weight', amount=sparsity)
+                prune.remove(module, 'weight')
+        
+        return self.model
+    
+    def optimize_for_inference(self) -> nn.Module:
+        """Comprehensive optimization for inference"""
+        model = self.quantize_model()
+        model = self.prune_model()
+        model.eval()
+        return model
