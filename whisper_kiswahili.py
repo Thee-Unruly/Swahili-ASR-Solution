@@ -332,3 +332,28 @@ class RealTimeASR:
                 return result
         
         return None
+    
+def main():
+    """Main execution function"""
+    config = ASRConfig()
+    
+    # Initialize trainer
+    trainer = SwahiliASRTrainer(config)
+    
+    # Train model
+    trainer.train()
+    
+    # Evaluate on test set
+    _, _, test_dataset = trainer.dataset_handler.prepare_common_voice_data(config.data_base_path)
+    eval_results = trainer.evaluate(test_dataset)
+    logger.info(f"Evaluation Results - WER: {eval_results['wer']:.4f}, RTF: {eval_results['rtf']:.4f}")
+    
+    # Create submission for test set (replace with actual test paths if different)
+    test_audio_paths = [item["audio"] for item in test_dataset]
+    trainer.create_submission(test_audio_paths, "C:/Users/ibrahim.fadhili/OneDrive - Agile Business Solutions/Desktop/ASR/kiswahili_asr/submissions/submission.csv")
+    
+    logger.info("ASR solution completed!")
+
+if __name__ == "__main__":
+    main()
+
